@@ -1,0 +1,218 @@
+
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<script>
+    // Verifica se está logado
+	if (sessionStorage.getItem("logado") !== "true") {
+		window.location.href = "index.html"; // força voltar para login
+	}
+</script>
+
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <title>Bairro</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; } 
+    header {
+      background-color: blue;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      flex-grow: 1;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    header button {
+      background-color: white;
+      color: blue;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .image-container {
+      position: relative;
+      display: block;
+      margin: 20px auto;
+      width: 70%;
+    }
+    .image-container img {
+      width: 100%;
+      border: 2px solid #ccc;
+      display: block;
+    }
+    .share-btn, .download-btn {
+      position: absolute;
+      right: 10px;
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100px;
+      text-align: center;
+    }
+    .share-btn { top: 10px; }
+    .download-btn { top: 45px; }
+    form { margin: 20px; }
+    input { margin: 5px; padding: 5px; }
+    button { margin: 5px; padding: 5px 10px; }
+    table { border-collapse: collapse; width: 90%; margin: 20px auto; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <header>
+    <button onclick="location.href='mapaprincipal.html'">Voltar</button>
+    <h1 id="tituloBairro">Bairro</h1>
+    <div style="width:60px;"></div>
+  </header>
+
+  <div class="image-container">
+    <img id="mapaBairro" src="" alt="Mapa do bairro">
+    <button class="share-btn" onclick="shareLink()">🔗 Link</button>
+    <button class="download-btn" onclick="downloadImage()">⬇️ Baixar</button>
+  </div>
+
+  <form id="personForm">
+    <input type="text" id="dirigente" placeholder="Nome do dirigente" required>
+    <input type="date" id="saida" required>
+    <button type="submit">Adicionar</button>
+  </form>
+
+  <table id="personTable">
+    <thead>
+      <tr>
+        <th>Nome do dirigente</th>
+        <th>Data da saída de Campo</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    // Captura parâmetros da URL
+    const params = new URLSearchParams(window.location.search);
+    const bairro = params.get('nome') || "Bairro";
+    const img = params.get('img') || "mapa.png";
+
+    document.getElementById('tituloBairro').textContent = bairro;
+    document.getElementById('mapaBairro').src = img;
+
+    const form = document.getElementById('personForm');
+    const tableBody = document.querySelector('#personTable tbody');
+    let registros = [];
+
+    // Carregar registros do Supabase
+    async function loadRegistros() {
+      try {
+        const data = await getPessoas(); // usa função do supabase.js
+        registros = data.filter(r => r.bairro === bairro);
+        renderTable();
+      } catch (err) {
+        console.error(err);
+        alert("Não foi possível carregar os registros.");
+      }
+    }
+
+    // Renderizar tabela
+    function renderTable() {
+      tableBody.innerHTML = '';
+      registros.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.dirigente}</td>
+          <td>${item.saida}</td>
+          <td>
+            <button onclick="editRegistro(${index})">Editar</button>
+            <button onclick="deleteRegistro(${item.id})">Remover</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Adicionar registro
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const dirigente = document.getElementById('dirigente').value;
+      const saida = document.getElementById('saida').value;
+
+      await adicionarPessoa(bairro, dirigente, saida); // usa função do supabase.js
+      form.reset();
+      loadRegistros();
+    });
+
+    // Editar registro (remove e re-adiciona)
+    async function editRegistro(index) {
+      const registro = registros[index];
+      document.getElementById('dirigente').value = registro.dirigente;
+      document.getElementById('saida').value = registro.saida;
+      await deleteRegistro(registro.id);
+    }
+
+    // Remover registro
+    async function deleteRegistro(id) {
+      await removerPessoa(id); // usa função do supabase.js
+      loadRegistros();
+    }
+
+    // Compartilhar link da imagem
+    async function shareLink() {
+      const imgUrl = document.getElementById('mapaBairro').src;
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: "Mapa do bairro",
+            text: "Confira este mapa!",
+            url: imgUrl
+          });
+        } catch (err) {
+          console.error("Erro ao compartilhar link:", err);
+        }
+      } else {
+        alert("Compartilhamento de link não suportado neste navegador.");
+      }
+    }
+
+    // Baixar imagem
+    async function downloadImage() {
+      const imgUrl = document.getElementById('mapaBairro').src;
+      try {
+        const response = await fetch(imgUrl);
+        if (!response.ok) throw new Error("Erro ao buscar imagem");
+        
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "mapa-bairro.png";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error("Erro ao baixar imagem:", err);
+        alert("Não foi possível baixar a imagem neste dispositivo.");
+      }
+    }
+
+    // Inicializar
+    loadRegistros();
+  </script>
+</body>
+</html>

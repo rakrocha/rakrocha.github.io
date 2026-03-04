@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<script>
+    // Verifica se está logado
+	if (sessionStorage.getItem("logado") !== "true") {
+		window.location.href = "index.html"; // força voltar para login
+	}
+</script>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Manutenção de Usuários</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    .form-section { margin-top: 30px; }
+    .form-section input, .form-section select { margin: 5px; padding: 6px; }
+    button { margin: 5px; padding: 6px 12px; cursor: pointer; }
+    button:hover { background-color: #ddd; }
+  </style>
+</head>
+<body>
+  <h1>Manutenção de Usuários</h1>
+
+  <!-- Tabela de usuários -->
+  <table>
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Tipo de Acesso</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-usuarios">
+      <!-- Linhas preenchidas via supabase.js -->
+    </tbody>
+  </table>
+
+  <!-- Formulário para adicionar/alterar usuário -->
+  <div class="form-section">
+    <h2>Adicionar / Alterar Usuário</h2>
+    <form id="form-usuario">
+      <input type="text" id="username" placeholder="Username" required>
+      <input type="password" id="password" placeholder="Nova Senha">
+      <select id="tipoacesso" required>
+        <option value="FULL ">FULL</option>
+        <option value="READ ">READ</option>
+        <option value="WRITE">WRITE</option>
+        <option value="ADMIN">ADMIN</option>
+      </select>
+      <button type="submit">Salvar</button>
+    </form>
+  </div>
+
+  <!-- Importa o arquivo supabase.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
+  <script>
+  
+    // Verifica se está logado
+	if (sessionStorage.getItem("logado") !== "true") {
+		window.location.href = "index.html"; // força voltar para login
+	}
+  
+    // Inicializa a tabela ao carregar a página
+    document.addEventListener("DOMContentLoaded", () => {
+      carregarUsuarios();
+    });
+
+    // Captura do formulário
+    document.getElementById("form-usuario").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const username = document.getElementById("username").value;
+      const password_hash = document.getElementById("password").value;
+      const tipoacesso = document.getElementById("tipoacesso").value;
+
+      const ok = await postUsuario(username, password_hash, tipoacesso);
+      if (ok) {
+        alert("Usuário salvo com sucesso!");
+        carregarUsuarios();
+        this.reset();
+      } else {
+        alert("Erro ao salvar usuário.");
+      }
+    });
+  </script>
+</body>
+</html>

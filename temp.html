@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<script>
+    // Verifica se está logado
+    if (sessionStorage.getItem("logado") !== "true") {
+        window.location.href = "index.html"; // força voltar para login
+    }
+</script>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa Interativo dos Bairros</title>
+  <script src="supabase.js"></script>
+  <style>
+    /* Layout geral */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* Título fixo no topo */
+    header {
+      flex: 0 0 auto;
+      text-align: center;
+      padding: 15px;
+      background: #f0f0f0;
+      border-bottom: 2px solid #ccc;
+      position: relative; /* permite posicionar botão dentro */
+    }
+
+    h1 {
+      color: blue;
+      margin-bottom: 20px;
+      width: 70%;
+      margin-left: auto;
+      margin-right: auto;
+      font-size: clamp(24px, 7vw, 80px);
+      line-height: 1.2;
+      word-wrap: break-word;
+      text-align: center;
+    }
+
+    p {
+      font-size: 38px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    /* Botão SAIR */
+    .btn-sair {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background-color: #ff4d4d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-sair:hover {
+      background-color: #cc0000;
+    }
+
+    /* Container do mapa */
+    main {
+      flex: 1 1 auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    svg {
+      width: 95%;
+      height: auto;
+      border: 2px solid #ccc;
+      display: block;
+      margin-top: 20px;
+    }
+
+    text { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mapa Interativo dos Bairros</h1>
+    <p>Clique em um estado para abrir sua página correspondente.</p>
+    <!-- Botão SAIR -->
+    <button class="btn-sair" onclick="sair()">SAIR</button>
+  </header>
+
+  <main>
+    <svg id="mapa" viewBox="0 0 1500 1450" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+      <image href="mapas/mapacompleto.png" x="0" y="0" width="1500" height="1450"/>
+    </svg>
+  </main>
+
+  <script>
+    // Função SAIR
+    function sair() {
+      sessionStorage.removeItem("logado"); // limpa valor
+      window.location.href = "index.html"; // redireciona
+    }
+
+    // Estrutura de dados com os bairros
+    const bairros = [
+      {nome: "Jardim São Paulo", label: "01 Jd São Paulo", imageid: "01", x: 153, y: 523, w: 120, h: 50},
+      {nome: "Jardim São Paulo", label: "02 Jd São Paulo", imageid: "02", x: 410, y: 465, w: 120, h: 50},
+      // ... demais bairros
+    ];
+
+    const svg = document.getElementById("mapa");
+
+    bairros.forEach(b => {
+      const a = document.createElementNS("http://www.w3.org/2000/svg", "a");
+      a.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `bairro.html?nome=${b.nome}&img=mapas/${b.imageid}.png`);
+
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", b.x);
+      rect.setAttribute("y", b.y + 15);
+      rect.setAttribute("width", b.w);
+      rect.setAttribute("height", b.h);
+      rect.setAttribute("fill", "black");
+      rect.setAttribute("fill-opacity", "0.2");
+      rect.setAttribute("rx", "5");
+      rect.setAttribute("ry", "5");
+
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", b.x + b.w/2);
+      text.setAttribute("y", b.y + b.h - 15);
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("font-size", "16");
+      text.setAttribute("font-weight", "bold");
+      text.setAttribute("fill", "darkblue");
+
+      const tspan1 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+      tspan1.setAttribute("x", b.x + b.w/2);
+      tspan1.setAttribute("dy", "0");
+      tspan1.textContent = b.label.split(" ")[0];
+
+      const tspan2 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+      tspan2.setAttribute("x", b.x + b.w/2);
+      tspan2.setAttribute("dy", "20");
+      tspan2.textContent = b.label.split(" ").slice(1).join(" ");
+
+      text.appendChild(tspan1);
+      text.appendChild(tspan2);
+
+      a.appendChild(rect);
+      a.appendChild(text);
+      svg.appendChild(a);
+    });
+  </script>
+</body>
+</html>

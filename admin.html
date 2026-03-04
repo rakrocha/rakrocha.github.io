@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<script>
+    // Verifica se está logado
+	if (sessionStorage.getItem("logado") !== "true") {
+		window.location.href = "index.html"; // força voltar para login
+	}
+</script>
+<head>
+  <meta charset="UTF-8">
+  <title>Pessoas e Usuários</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+</head>
+<body>
+  <h1>Lista de Pessoas</h1>
+  <table border="1">
+    <thead>
+      <tr>
+        <th>id</th>
+        <th>bairro</th>
+        <th>dirigente</th>
+        <th>saida</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-pessoas"></tbody>
+  </table>
+
+  <h1>Lista de Usuários</h1>
+  <table border="1">
+    <thead>
+      <tr>
+        <th>id</th>
+        <th>username</th>
+        <th>password_hash</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-usuarios"></tbody>
+  </table>
+
+  <script>
+    carregarPessoas();
+    carregarUsuarios();	
+  </script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    body {
+      background-color: #add8e6;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-box {
+      background-color: #f0f0f0;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+      text-align: center;
+      width: 500px;
+    }
+    .login-box h1 {
+      margin-bottom: 25px;
+      font-size: 28px;
+    }
+    .login-box label {
+      display: block;
+      margin: 15px 0 5px;
+      font-size: 20px;
+      text-align: left;
+    }
+    .login-box input {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    .login-box button {
+      width: 100%;
+      padding: 14px;
+      font-size: 20px;
+      background-color: #4682b4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .login-box button:hover {
+      background-color: #315f7d;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h1>Login</h1>
+    <form id="login-form">
+      <label for="username">Usuário:</label>
+      <input type="text" id="username" required>
+
+      <label for="password">Senha:</label>
+      <input type="password" id="password" required>
+
+      <!-- Dois botões de ação -->
+      <button type="button" id="btn-mapa">Consultar mapa principal</button>
+      <button type="button" id="btn-admin">Administração</button>
+    </form>
+  </div>
+
+  <script>
+    
+    const form = document.getElementById("login-form");
+    const btnMapa = document.getElementById("btn-mapa");
+    const btnAdmin = document.getElementById("btn-admin");
+
+    btnMapa.addEventListener("click", async () => {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const tipoacesso = await login(username, password);
+
+      if (tipoacesso === "READ " || tipoacesso === "FULL " || tipoacesso === "ADMIN" || tipoacesso === "WRITE") {
+        alert("Login realizado com sucesso!");
+        sessionStorage.setItem("logado", "true");
+        sessionStorage.setItem("username", username);
+		sessionStorage.setItem("tipoacesso", tipoacesso);
+        window.location.href = "mapaprincipal.html";
+      } else if (tipoacesso === "NOT_FOUND") {
+        alert("Usuário ou senha inválidos.");
+      } else {
+        alert(`Acesso negado. Seu tipo de acesso é: ${tipoacesso}`);
+      }
+    });
+
+    btnAdmin.addEventListener("click", async () => {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const tipoacesso = await login(username, password);
+
+      if (tipoacesso === "ADMIN") {
+        alert("Login realizado com sucesso!");
+        sessionStorage.setItem("logado", "true");
+        sessionStorage.setItem("username", username);
+		sessionStorage.setItem("tipoacesso", tipoacesso);
+        window.location.href = "admin.html";
+      } else if (tipoacesso === "NOT_FOUND") {
+        alert("Usuário ou senha inválidos.");
+      } else {
+        alert(`Acesso negado. Seu tipo de acesso é: ${tipoacesso}`);
+      }
+    });
+  </script>
+</body>
+</html>

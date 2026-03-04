@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<script>
+    // Verifica se está logado
+	if (sessionStorage.getItem("logado") !== "true") {
+		window.location.href = "index.html"; // força voltar para login
+	}
+</script>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa Interativo dos Bairros</title>
+  <script src="supabase.js"></script>
+  <style>
+    /* Layout geral */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;             /* ocupa toda a altura da tela */
+    }
+
+    /* Título fixo no topo */
+    header {
+      flex: 0 0 auto;            
+      text-align: center;
+      padding: 15px;
+      background: #f0f0f0;
+      border-bottom: 2px solid #ccc;
+    }
+
+    h1 {
+      color: blue;
+      margin-bottom: 20px;
+      width: 70%;                /* ocupa 70% da largura */
+      margin-left: auto;         /* centraliza horizontalmente */
+      margin-right: auto;
+      font-size: clamp(24px, 7vw, 80px); /* responsivo: mínimo 24px, máximo 80px */
+      line-height: 1.2;
+      word-wrap: break-word;     /* quebra palavras longas */
+      text-align: center;        /* garante centralização do texto */
+    }
+
+    /* Apenas o parágrafo terá fonte maior */
+    p {
+      font-size: 38px; /* ajuste conforme desejar */
+      font-weight: bold; /* opcional */
+      color: #333;       /* opcional, para dar contraste */
+    }
+	
+	/* Botão SAIR */
+    .btn-sair {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background-color: #ff4d4d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+	
+	.btn-sair:hover {
+      background-color: #cc0000;
+    }
+
+    /* Container do mapa */
+    main {
+      flex: 1 1 auto;            
+      display: flex;
+      justify-content: center;   /* centraliza horizontalmente */
+      align-items: flex-start;   /* alinha no topo */
+    }
+
+    svg {
+      width: 95%;                /* ocupa 95% da largura */
+      height: auto;              /* ajusta proporcionalmente */
+      border: 2px solid #ccc;
+      display: block;
+      margin-top: 20px;          /* espaço entre título e imagem */
+    }
+
+    text { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mapa Interativo dos Bairros</h1>
+	<p>Clique em um estado para abrir sua página correspondente.</p>
+	<!-- Botão SAIR -->
+    <button class="btn-sair" onclick="sair()">SAIR</button>
+  </header>
+
+  <main>
+    <svg id="mapa" viewBox="0 0 1500 1450" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+      <!-- Imagem de fundo -->
+      <image href="mapas/mapacompleto.png" x="0" y="0" width="1500" height="1450"/>
+    </svg>
+  </main>
+
+  <script>
+    // Função SAIR
+    function sair() {
+      sessionStorage.removeItem("logado"); // limpa valor
+      window.location.href = "index.html"; // redireciona  
+	}
+  
+    // Estrutura de dados com os bairros
+    const bairros = [
+{nome: "Jardim São Paulo", label: "01 Jd São Paulo", imageid: "01", x: 153, y: 523, w: 120, h: 50},
+{nome: "Jardim São Paulo", label: "02 Jd São Paulo", imageid: "02", x: 410, y: 465, w: 120, h: 50},
+{nome: "Jardim São Paulo (Caixa D'Água)", label: "03 Jd São Paulo", imageid: "03", x: 110, y: 374, w: 120, h: 50},
+{nome: "Jardim Morro Azul (Baixo)", label: "04 Jd Morro Azul", imageid: "04", x: 106, y: 250, w: 128, h: 50},
+{nome: "Jardim Morro Azul (Cima)", label: "05 Jd Morro Azul", imageid: "05", x: 260, y: 343, w: 128, h: 50},
+{nome: "Jardim Paulista", label: "06 Jd Paulista", imageid: "06", x: 410, y: 281, w: 112, h: 50},
+{nome: "Jardim Piratininga", label: "07 Jd Piratininga", imageid: "07", x: 623, y: 385, w: 136, h: 50},
+{nome: "Jardim Nova Italia", label: "08 Jd Nova Italia", imageid: "08", x: 569, y: 252, w: 136, h: 50},
+{nome: "Jardim Nova Italia", label: "09 Jd Nova Italia", imageid: "09", x: 779, y: 395, w: 136, h: 50},
+{nome: "Jardim Santa Luiza", label: "10 Jd Santa Luiza", imageid: "10", x: 733, y: 226, w: 136, h: 50},
+{nome: "Jardim Piratininga", label: "11 Jd Piratininga", imageid: "11", x: 846, y: 274, w: 136, h: 50},
+{nome: "Jardim Piratininga", label: "12 Jd Piratininga", imageid: "12", x: 931, y: 328, w: 136, h: 50},
+{nome: "Jardim Aquarius", label: "13 Jardim Aquarius", imageid: "13", x: 963, y: 121, w: 144, h: 50},
+{nome: "Jardim Piratininga (Praça da Bíblia)", label: "14 Jd Piratininga", imageid: "14", x: 1077, y: 211, w: 136, h: 50},
+{nome: "Vila Mathias", label: "15 Vila Mathias", imageid: "15", x: 1070, y: 361, w: 120, h: 50},
+{nome: "Limeiranea I", label: "16 Limeiranea I", imageid: "16", x: 144, y: 739, w: 120, h: 50},
+{nome: "Limeiranea II", label: "17 Limeiranea II", imageid: "17", x: 216, y: 1013, w: 128, h: 50},
+{nome: "Vila Agostinho", label: "18 Vila Agostinho", imageid: "18", x: 357, y: 912, w: 136, h: 50},
+{nome: "Senador Vergueiro", label: "19 Senador Vergueiro", imageid: "19", x: 329, y: 680, w: 160, h: 50},
+{nome: "Salão do Reino I", label: "20 Salão do Reino I", imageid: "20", x: 519, y: 632, w: 152, h: 50},
+{nome: "Salão do Reino II", label: "21 Salão do Reino II", imageid: "21", x: 558, y: 779, w: 160, h: 50},
+{nome: "Sthalberg I", label: "22 Sthalberg I", imageid: "22", x: 574, y: 911, w: 112, h: 50},
+{nome: "Sthalberg II", label: "23 Sthalberg II", imageid: "23", x: 502, y: 1052, w: 120, h: 50},
+{nome: "Amparo I", label: "24 Amparo I", imageid: "24", x: 757, y: 647, w: 88, h: 50},
+{nome: "Amparo II", label: "25 Amparo II", imageid: "25", x: 781, y: 984, w: 120, h: 50},
+{nome: "Vila Di Fior", label: "26 Vila Di Fior", imageid: "26", x: 777, y: 881, w: 96, h: 50},
+{nome: "Modeneis", label: "27 Modeneis", imageid: "27", x: 772, y: 1094, w: 88, h: 50},
+{nome: "Santa Josefa I", label: "28 Santa Josefa I", imageid: "28", x: 964, y: 786, w: 136, h: 50},
+{nome: "Santa Josefa II", label: "29 Santa Josefa II", imageid: "29", x: 904, y: 598, w: 144, h: 50},
+{nome: "Maria Helena II", label: "30 Maria Helena II", imageid: "30", x: 1191, y: 716, w: 144, h: 50},
+{nome: "Maria Helena I", label: "31 Maria Helena I", imageid: "31", x: 1110, y: 775, w: 136, h: 50},
+{nome: "São João I", label: "32 São João I", imageid: "32", x: 1233, y: 495, w: 104, h: 50},
+{nome: "São João II", label: "33 São João II", imageid: "33", x: 1115, y: 517, w: 112, h: 50},
+{nome: "São João III", label: "34 São João III", imageid: "34", x: 1013, y: 545, w: 120, h: 50},
+{nome: "Santa Cecilia", label: "35 Santa Cecilia", imageid: "35", x: 1008, y: 960, w: 128, h: 50},
+{nome: "Centro", label: "36 Centro", imageid: "36", x: 1314, y: 593, w: 72, h: 50},
+      // basta adicionar novos bairros aqui
+    ];
+
+    const svg = document.getElementById("mapa");
+
+bairros.forEach(b => {
+  // Cria o link que envolve a caixa e o texto
+  const a = document.createElementNS("http://www.w3.org/2000/svg", "a");
+  a.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `bairro.html?nome=${b.nome}&img=mapas/${b.imageid}.png`);
+
+  // Caixa de fundo
+  const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  rect.setAttribute("x", b.x);
+  rect.setAttribute("y", b.y + 15);
+  rect.setAttribute("width", b.w);
+  rect.setAttribute("height", b.h);
+  rect.setAttribute("fill", "black");
+  rect.setAttribute("fill-opacity", "0.2");
+  rect.setAttribute("rx", "5");
+  rect.setAttribute("ry", "5");
+
+  // Texto dentro da caixa
+  const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  text.setAttribute("x", b.x + b.w/2);
+  text.setAttribute("y", b.y + b.h - 15);
+  text.setAttribute("text-anchor", "middle");
+  text.setAttribute("font-size", "16");
+  text.setAttribute("font-weight", "bold");
+  text.setAttribute("fill", "darkblue");
+
+  // Primeira linha
+  const tspan1 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+  tspan1.setAttribute("x", b.x + b.w/2);
+  tspan1.setAttribute("dy", "0");
+  tspan1.textContent = b.label.split(" ")[0];
+
+  // Segunda linha
+  const tspan2 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+  tspan2.setAttribute("x", b.x + b.w/2);
+  tspan2.setAttribute("dy", "20");
+  tspan2.textContent = b.label.split(" ").slice(1).join(" ");
+
+  text.appendChild(tspan1);
+  text.appendChild(tspan2);
+
+  // Adiciona rect e texto dentro do link
+  a.appendChild(rect);
+  a.appendChild(text);
+
+  // Adiciona ao SVG
+  svg.appendChild(a);
+});
+  </script>
+</body>
+</html>
